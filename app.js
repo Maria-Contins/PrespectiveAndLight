@@ -33,12 +33,16 @@ import {
 
 import * as SPHERE from "../../libs/sphere.js";
 import * as CUBE from "../../libs/cube.js";
+import * as PYRAMID from "../../libs/pyramid.js";
+import * as TORUS from "../../libs/torus.js";
+import * as CYLINDER from "../../libs/cylinder.js";
 import * as dat from "../../libs/dat.gui.module.js";
 
 /** @type WebGLRenderingContext */
 
 let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
+let shape = "sphere";
 let animation = true; // Animation is running
 let cameraGUI;
 
@@ -47,7 +51,9 @@ let downX;
 let downY;
 
 const FLOOR_HEIGHT = 0.5;
+
 function setup(shaders) {
+
   let canvas = document.getElementById("gl-canvas");
 
   gl = setupWebGL(canvas);
@@ -60,6 +66,17 @@ function setup(shaders) {
 
   mode = gl.TRIANGLES;
 
+  gl.clearColor(0.0, 0.0, 0.0, 1);
+
+  SPHERE.init(gl);
+  CUBE.init(gl);
+  CYLINDER.init(gl);
+  TORUS.init(gl);
+  PYRAMID.init(gl);
+
+  gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
+
+  //KEYBOARD CONTROLS
   document.onkeydown = function (event) {
     switch (event.key) {
       case "W":
@@ -71,31 +88,43 @@ function setup(shaders) {
       case "p":
         animation = !animation;
         break;
-      case "-":
-        VP_DISTANCE += 0.5;
-        break;
-      case "+":
-        VP_DISTANCE -= 0.5;
-        break;
+        /*case "-":
+          VP_DISTANCE += 0.5;
+          break;
+        case "+":
+          VP_DISTANCE -= 0.5;
+          break;*/
     }
   };
 
-  gl.clearColor(0.0, 0.0, 0.0, 1);
-
-  SPHERE.init(gl);
-  CUBE.init(gl);
-
-  gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
-
   window.requestAnimationFrame(render);
 
+  // resize window
+  let aspectWindow = canvas.width / canvas.height;
+  window.onresize = function () {
+    canvas.height = window.innerHeight;
+    canvas.width =  window.innerWidth;
+    aspectWindow = canvas.width / canvas.height;
+
+    gl.viewport(0, 0,canvas.width, canvas.height);
+  }
+
+
   cameraGUI = new dat.GUI({ name: "Camera GUI" });
+
+  // OPTIONS
   let optionsFolder = cameraGUI.addFolder("options");
+
   let options = {
     wireframe: false,
     normals: true,
+    backfaceCulling: true,
+    depthFirst: true,
+    showLights: true
+    // TODO add rest
   };
 
+  // wireframe
   optionsFolder
     .add(options, "wireframe")
     .listen()
@@ -107,13 +136,11 @@ function setup(shaders) {
       }
     });
 
+  // normals
   optionsFolder.add(options, "normals");
 
+  // CAMERA
   let cameraFolder = cameraGUI.addFolder("camera");
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  let aspectWindow = canvas.width / canvas.height;
 
   let camera = {
     eye: vec3(3.67, 4.06, 2.73),
@@ -250,9 +277,23 @@ function setup(shaders) {
     type: "Sphere",
   };
 
+  optionsFolder
+      .add(options, "wireframe")
+      .listen()
+      .onChange(function (v) {
+        if (options.wireframe) {
+          mode = gl.LINES;
+        } else {
+          mode = gl.TRIANGLES;
+        }
+      });
+
   objectGUI
     .add(objectType, "type", ["Cube", "Sphere", "Cylinder", "Pyramid", "Torus"])
-    .listen();
+    .listen().onChange(function (v) {
+
+    });
+
 
   let materialFolder = objectGUI.addFolder("material");
   materialFolder.addColor(objectMaterial, "Ka").listen();
@@ -283,7 +324,7 @@ function setup(shaders) {
       multTranslation(l.pos);
       multScale([0.1, 0.1, 0.1]);
       uploadModelView();
-      SPHERE.draw(gl, program, mode);
+      SPHERE.draw(gl, program, gl.LINES);
       popMatrix();
     }
   }
@@ -389,7 +430,10 @@ function setup(shaders) {
       counter++;
     }
 
-    gl.uniform3fv(gl.getUniformLocation(program, "V"), flatten(camera.eye));
+    gl.uniform3fv(
+        gl.getUniformLocation(program, "V"),
+        flatten(camera.eye)
+    );
 
     let tempM = modelView();
     loadIdentity();
@@ -438,6 +482,7 @@ function setup(shaders) {
 		loadMatrix(view);
 		mView = modelView(); */
 
+    // DRAW STUFF
     uploadModelView();
     pushMatrix();
     multTranslation([0, 1, 0]);
@@ -449,7 +494,9 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
     popMatrix();
     drawLights();
+
   }
 }
+
 const urls = ["shader.vert", "shader.frag"];
 loadShadersFromURLS(urls).then((shaders) => setup(shaders));
