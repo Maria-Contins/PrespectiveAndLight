@@ -42,7 +42,8 @@ import * as dat from "../../libs/dat.gui.module.js";
 
 let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
-let shape = "sphere";
+let shape = "sphere"; // primitive drawn
+let zBuff = true;
 let animation = true; // Animation is running
 let cameraGUI;
 
@@ -97,8 +98,6 @@ function setup(shaders) {
     }
   };
 
-  window.requestAnimationFrame(render);
-
   // resize window
   let aspectWindow = canvas.width / canvas.height;
   window.onresize = function () {
@@ -135,6 +134,16 @@ function setup(shaders) {
         mode = gl.TRIANGLES;
       }
     });
+  /*optionsFolder
+      .add(options, "depth first")
+      .listen()
+      .onChange(function (v) {
+        if (options.depthFirst) {
+          gl.disable(gl.DEPTH_TEST);
+        } else {
+          gl.enable(gl.DEPTH_TEST);
+        }
+      });*/
 
   // normals
   optionsFolder.add(options, "normals");
@@ -277,16 +286,6 @@ function setup(shaders) {
     type: "Sphere",
   };
 
-  optionsFolder
-      .add(options, "wireframe")
-      .listen()
-      .onChange(function (v) {
-        if (options.wireframe) {
-          mode = gl.LINES;
-        } else {
-          mode = gl.TRIANGLES;
-        }
-      });
 
   objectGUI
     .add(objectType, "type", ["Cube", "Sphere", "Cylinder", "Pyramid", "Torus"])
@@ -329,62 +328,68 @@ function setup(shaders) {
     }
   }
 
+  // change object
+  function draw(){
+    switch (shape) {
+      case "sphere":
+        SPHERE.draw(gl, program, mode);
+        break;
+      case "cube":
+        CUBE.draw(gl, program, mode);
+        break;
+      case "cylinder":
+        CYLINDER.draw(gl, program, mode);
+        break;
+      case "pyramid":
+        PYRAMID.draw(gl, program, mode);
+        break;
+      case "torus":
+        TORUS.draw(gl, program, mode);
+        break;
+    }
+  }
+
+  window.requestAnimationFrame(render);
+
   function render() {
     window.requestAnimationFrame(render);
-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
     gl.useProgram(program);
 
-    let mProj = perspective(
-      camera.fovy,
-      camera.aspect,
-      camera.near,
-      camera.far
-    );
+    let mProj = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
 
     gl.uniformMatrix4fv(
-      gl.getUniformLocation(program, "mProjection"),
-      false,
-      flatten(mProj)
+        gl.getUniformLocation(program, "mProjection"),
+        false, flatten(mProj)
     );
 
     gl.uniform1f(
-      gl.getUniformLocation(program, "uMaterial.shininess"),
-      objectMaterial.shininess
+        gl.getUniformLocation(program, "uMaterial.shininess"),
+        objectMaterial.shininess
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Ka"),
-      flatten(
-        vec3(
-          objectMaterial.Ka[0] / 255,
-          objectMaterial.Ka[1] / 255,
-          objectMaterial.Ka[2] / 255
-        )
+      flatten( vec3(objectMaterial.Ka[0] / 255,
+                    objectMaterial.Ka[1] / 255,
+                    objectMaterial.Ka[2] / 255 )
       )
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Kd"),
-      flatten(
-        vec3(
-          objectMaterial.Kd[0] / 255,
-          objectMaterial.Kd[1] / 255,
-          objectMaterial.Kd[2] / 255
-        )
-      )
+        flatten( vec3(objectMaterial.Kd[0] / 255,
+                      objectMaterial.Kd[1] / 255,
+                      objectMaterial.Kd[2] / 255)
+       )
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Ks"),
-      flatten(
-        vec3(
-          objectMaterial.Ks[0] / 255,
-          objectMaterial.Ks[1] / 255,
-          objectMaterial.Ks[2] / 255
+        flatten( vec3(objectMaterial.Ks[0] / 255,
+                      objectMaterial.Ks[1] / 255,
+                      objectMaterial.Ks[2] / 255)
         )
-      )
     );
 
     gl.uniform1i(gl.getUniformLocation(program, "uNLights"), lightArray.length);
@@ -430,10 +435,7 @@ function setup(shaders) {
       counter++;
     }
 
-    gl.uniform3fv(
-        gl.getUniformLocation(program, "V"),
-        flatten(camera.eye)
-    );
+    gl.uniform3fv(gl.getUniformLocation(program, "V"), flatten(camera.eye));
 
     let tempM = modelView();
     loadIdentity();
