@@ -43,6 +43,7 @@ import * as dat from "../../libs/dat.gui.module.js";
 let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let shape = "sphere"; // primitive drawn
+let lightsOn = false;
 let zBuff = true;
 let animation = true; // Animation is running
 let cameraGUI;
@@ -290,7 +291,7 @@ function setup(shaders) {
   objectGUI
     .add(objectType, "type", ["Cube", "Sphere", "Cylinder", "Pyramid", "Torus"])
     .listen().onChange(function (v) {
-
+        // TODO
     });
 
 
@@ -318,13 +319,15 @@ function setup(shaders) {
   }
 
   function drawLights() {
-    for (let l of lightArray) {
-      pushMatrix();
-      multTranslation(l.pos);
-      multScale([0.1, 0.1, 0.1]);
-      uploadModelView();
-      SPHERE.draw(gl, program, gl.LINES);
-      popMatrix();
+    if (lightsOn) {
+      for (let l of lightArray) {
+        pushMatrix();
+        multTranslation(l.pos);
+        multScale([0.1, 0.1, 0.1]);
+        uploadModelView();
+        SPHERE.draw(gl, program, gl.LINES);
+        popMatrix();
+      }
     }
   }
 
