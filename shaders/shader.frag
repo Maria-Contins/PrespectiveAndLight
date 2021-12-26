@@ -34,9 +34,9 @@ vec3 forLight(){
 
         LightInfo light = uLight[i];
 
-        vec3 P = normalize(vP);
+        vec3 P = normalize(vP);  // vP = (mModel * vPosition).xyz;
 
-        vec3 N = normalize(vN);
+        vec3 N = normalize(vN); // vN = (mModelNormals * vec4(vNormal, 0.0)).xyz;
 
         vec3 L = normalize(light.pos - P);
 

@@ -43,7 +43,7 @@ import * as dat from "../../libs/dat.gui.module.js";
 let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let shape = "sphere"; // primitive drawn
-let lightsOn = false;
+let lightsOn = true;
 let zBuff = true;
 let animation = true; // Animation is running
 let cameraGUI;
@@ -77,6 +77,7 @@ function setup(shaders) {
   PYRAMID.init(gl);
 
   gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
+  //gl.enable(gl.CULL_FACE)
 
   //KEYBOARD CONTROLS
   document.onkeydown = function (event) {
@@ -99,34 +100,21 @@ function setup(shaders) {
     }
   };
 
-  // resize window
-  let aspectWindow = canvas.width / canvas.height;
-  window.onresize = function () {
-    canvas.height = window.innerHeight;
-    canvas.width =  window.innerWidth;
-    aspectWindow = canvas.width / canvas.height;
-
-    gl.viewport(0, 0,canvas.width, canvas.height);
-  }
-
-
   cameraGUI = new dat.GUI({ name: "Camera GUI" });
 
   // OPTIONS
   let optionsFolder = cameraGUI.addFolder("options");
 
   let options = {
-    wireframe: false,
+    wireframe: false, //check
     normals: true,
     backfaceCulling: true,
-    depthFirst: true,
-    showLights: true
-    // TODO add rest
+    depthFirst: true, //check
+    showLights: true //check
   };
 
-  // wireframe
-  optionsFolder
-    .add(options, "wireframe")
+  /// wireframe
+  optionsFolder.add(options, "wireframe")
     .listen()
     .onChange(function (v) {
       if (options.wireframe) {
@@ -135,25 +123,47 @@ function setup(shaders) {
         mode = gl.TRIANGLES;
       }
     });
-  /*optionsFolder
-      .add(options, "depth first")
-      .listen()
+  // depth first
+  optionsFolder.add(options, "depthFirst")
+      .listen().name("depth first")
       .onChange(function (v) {
-        if (options.depthFirst) {
+        if (options.depthFirst)
           gl.disable(gl.DEPTH_TEST);
-        } else {
+        else
           gl.enable(gl.DEPTH_TEST);
-        }
-      });*/
-
+      });
   // normals
-  optionsFolder.add(options, "normals");
+  optionsFolder.add(options, "normals")
+    .listen()
+      .onChange(function(v) {
+
+      });
+  // backfaceculling
+  optionsFolder.add(options, "backfaceCulling")
+      .listen().name("backface culling")
+      .onChange(function(v) {
+        if (options.depthFirst) {
+          gl.enable(gl.CULL_FACE);
+          gl.cullFace(gl.BACK);
+        } else
+          gl.disable(gl.CULL_FACE);
+      });
+  // show lights
+  optionsFolder.add(options, "showLights")
+      .listen().name("show lights")
+      .onChange(function(v) {
+          lightsOn = !lightsOn;
+      });
+
 
   // CAMERA
   let cameraFolder = cameraGUI.addFolder("camera");
 
+  let aspectWindow = canvas.width / canvas.height;
+
   let camera = {
     eye: vec3(3.67, 4.06, 2.73),
+    //eye: vec3(0, 0, 0),
     at: vec3(0, 0, 0),
     up: vec3(0, 1, 0),
     fovy: 75,
@@ -162,15 +172,27 @@ function setup(shaders) {
     far: 20,
   };
 
+  // resize window
   resize_canvas();
-  window.addEventListener("resize", resize_canvas);
 
+  window.addEventListener("resize", resize_canvas);
+  function resize_canvas(event) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    aspectWindow = canvas.width / canvas.height;
+    camera.aspect = aspectWindow;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+
+  // camera options
   cameraFolder.add(camera, "fovy").min(1).max(100).step(0.5).listen();
   cameraFolder
     .add(camera, "aspect")
     .min(0)
     .max(10)
     .listen().domElement.style.pointerEvents = "none";
+    
 
   cameraFolder
     .add(camera, "near")
@@ -274,64 +296,28 @@ function setup(shaders) {
   }
   addLight();
 
+  // OBJECT FOLDER
   let objectGUI = new dat.GUI({ name: "Object GUI" });
 
-  var objectMaterial = {
+  // initial color
+  const objectMaterial = {
     Ka: [93, 255, 0],
-    Kd: [0, 255, 30],
+    Kd: [219,113,219],
     Ks: [255, 255, 255],
     shininess: 12,
   };
 
+  // change object type
   let objectType = {
-    type: "Sphere",
+    type: "sphere",
   };
-
-
   objectGUI
-    .add(objectType, "type", ["Cube", "Sphere", "Cylinder", "Pyramid", "Torus"])
+    .add(objectType, "type", ["cube", "sphere", "cylinder", "pyramid", "torus"])
     .listen().onChange(function (v) {
-        // TODO
+      shape = objectType.type;
+      draw();
     });
-
-
-  let materialFolder = objectGUI.addFolder("material");
-  materialFolder.addColor(objectMaterial, "Ka").listen();
-  materialFolder.addColor(objectMaterial, "Kd").listen();
-  materialFolder.addColor(objectMaterial, "Ks").listen();
-  materialFolder.add(objectMaterial, "shininess").step(0.05).listen();
-
-  function uploadModelView() {
-    gl.uniformMatrix4fv(
-      gl.getUniformLocation(program, "mModelView"),
-      false,
-      flatten(modelView())
-    );
-  }
-
-  function resize_canvas(event) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    aspectWindow = canvas.width / canvas.height;
-    camera.aspect = aspectWindow;
-    gl.viewport(0, 0, canvas.width, canvas.height);
-  }
-
-  function drawLights() {
-    if (lightsOn) {
-      for (let l of lightArray) {
-        pushMatrix();
-        multTranslation(l.pos);
-        multScale([0.1, 0.1, 0.1]);
-        uploadModelView();
-        SPHERE.draw(gl, program, gl.LINES);
-        popMatrix();
-      }
-    }
-  }
-
-  // change object
+  // change object type
   function draw(){
     switch (shape) {
       case "sphere":
@@ -349,6 +335,34 @@ function setup(shaders) {
       case "torus":
         TORUS.draw(gl, program, mode);
         break;
+    }
+  }
+
+  // change colors
+  let materialFolder = objectGUI.addFolder("material");
+  materialFolder.addColor(objectMaterial, "Ka").listen();
+  materialFolder.addColor(objectMaterial, "Kd").listen();
+  materialFolder.addColor(objectMaterial, "Ks").listen();
+  materialFolder.add(objectMaterial, "shininess").step(0.05).listen();
+
+  function uploadModelView() {
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(program, "mModelView"),
+      false,
+      flatten(modelView())
+    );
+  }
+
+  function drawLights() {
+    if (lightsOn) {
+      for (let l of lightArray) {
+        pushMatrix();
+        multTranslation(l.pos);
+        multScale([0.1, 0.1, 0.1]);
+        uploadModelView();
+        SPHERE.draw(gl, program, gl.LINES);
+        popMatrix();
+      }
     }
   }
 
@@ -492,7 +506,7 @@ function setup(shaders) {
     pushMatrix();
     multTranslation([0, 1, 0]);
     uploadModelView();
-    SPHERE.draw(gl, program, mode);
+    draw();
     multTranslation([0, -(1 / 2 + FLOOR_HEIGHT / 2), 0]);
     multScale([5, FLOOR_HEIGHT, 5]);
     uploadModelView();
