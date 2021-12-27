@@ -53,6 +53,7 @@ let downX;
 let downY;
 
 const FLOOR_HEIGHT = 0.5;
+const MAX_LIGHTS = 8;
 
 function setup(shaders) {
   let canvas = document.getElementById("gl-canvas");
@@ -225,24 +226,40 @@ function setup(shaders) {
 
   let lightsFolder = cameraFolder.addFolder("lights");
 
-  /* 	let lights = [];
-	
-		function createLight() {
-			lights.push({
-				x: 1,
-				y: 0,
-				z: 2,
-				ambient: [25, 25, 25],
-				diffuse: [75, 75, 75],
-				specular: [255, 255, 255],
-				directional: false,
-				active: false
-			})
-		} */
-
   let lightArray = [];
   let obj = {
     add: function addLight() {
+      if (lightArray.length < MAX_LIGHTS) {
+        let lightDic = {
+          pos: vec3(3, 5, 0),
+          ambient: [10, 10, 10],
+          diffuse: [255, 255, 255],
+          specular: [255, 255, 255],
+          directional: false,
+          active: true,
+        };
+
+        lightArray.push(lightDic);
+
+        let lightFolder = lightsFolder.addFolder("light" + lightArray.length);
+        let lightPosFolder = lightFolder.addFolder("position");
+        lightPosFolder.add(lightDic.pos, 0).step(0.05).name("x").listen();
+        lightPosFolder.add(lightDic.pos, 1).step(0.05).name("y").listen();
+        lightPosFolder.add(lightDic.pos, 2).step(0.05).name("z").listen();
+        lightFolder.addColor(lightDic, "ambient").listen();
+        lightFolder.addColor(lightDic, "diffuse").listen();
+        lightFolder.addColor(lightDic, "specular").listen();
+        lightFolder.add(lightDic, "directional");
+        lightFolder.add(lightDic, "active");
+      }
+    },
+  };
+  // add light tab
+  lightsFolder.add(obj, "add").name("Add a new light");
+
+  // TODO REMOVE
+  function addLight() {
+    if (lightArray.length < MAX_LIGHTS) {
       let lightDic = {
         pos: vec3(3, 5, 0),
         ambient: [10, 10, 10],
@@ -251,6 +268,7 @@ function setup(shaders) {
         directional: false,
         active: true,
       };
+
       lightArray.push(lightDic);
 
       let lightFolder = lightsFolder.addFolder("light" + lightArray.length);
@@ -263,34 +281,9 @@ function setup(shaders) {
       lightFolder.addColor(lightDic, "specular").listen();
       lightFolder.add(lightDic, "directional");
       lightFolder.add(lightDic, "active");
-    },
-  };
-  lightsFolder.add(obj, "add").name("Add a new light");
-
-  // TODO REMOVE
-  function addLight() {
-    let lightDic = {
-      pos: vec3(3, 5, 0),
-      ambient: [10, 10, 10],
-      diffuse: [255, 255, 255],
-      specular: [255, 255, 255],
-      directional: false,
-      active: true,
-    };
-    lightArray.push(lightDic);
-
-    let lightFolder = lightsFolder.addFolder("light" + lightArray.length);
-    let lightPosFolder = lightFolder.addFolder("position");
-    lightPosFolder.add(lightDic.pos, 0).step(0.05).name("x").listen();
-    lightPosFolder.add(lightDic.pos, 1).step(0.05).name("y").listen();
-    lightPosFolder.add(lightDic.pos, 2).step(0.05).name("z").listen();
-    lightFolder.addColor(lightDic, "ambient").listen();
-    lightFolder.addColor(lightDic, "diffuse").listen();
-    lightFolder.addColor(lightDic, "specular").listen();
-    lightFolder.add(lightDic, "directional");
-    lightFolder.add(lightDic, "active");
+    }
   }
-
+  // add first light
   addLight();
 
   let objectGUI = new dat.GUI({ name: "Object GUI" });
@@ -356,19 +349,10 @@ function setup(shaders) {
         multTranslation(l.pos);
         multScale([0.1, 0.1, 0.1]);
         uploadModelView();
-        //activateColor([1,1,1]);
         SPHERE.draw(gl, program, gl.LINES);
         popMatrix();
       }
     }
-  }
-
-  // TODO
-  function activateColor(color) {
-    let uColor = gl.getUniformLocation(program, "fColor");
-    gl.uniform3fv(uColor, flatten(color));
-    let hasColor = gl.getUniformLocation(program, "hasColor");
-    gl.uniform1f(hasColor, 1.0);
   }
 
   window.requestAnimationFrame(render);
@@ -474,8 +458,6 @@ function setup(shaders) {
       counter++;
     }
 
-    /*  gl.uniform3fv(gl.getUniformLocation(program, "V"), flatten(camera.eye));
-     */
     let tempM = modelView();
     loadIdentity();
     let mModel = modelView();
@@ -515,19 +497,6 @@ function setup(shaders) {
       false,
       flatten(normalMatrix(modelView()))
     );
-
-    /* mProjection = ortho(
-			-VP_DISTANCE * aspect,
-			VP_DISTANCE * aspect,
-			-VP_DISTANCE,
-			VP_DISTANCE,
-			-3 * VP_DISTANCE,
-			3 * VP_DISTANCE
-		);
-
-		// CAMERA SETTING
-		loadMatrix(view);
-		mView = modelView(); */
 
     uploadModelView();
     pushMatrix();
