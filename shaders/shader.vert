@@ -2,6 +2,7 @@ uniform mat4 mModelView;
 uniform mat4 mProjection;
 uniform mat4 mView;
 uniform mat4 mModelNormals;
+uniform mat4 mModelViewNormals;
 uniform mat4 mModel;
 uniform mat4 mNormals;
 
@@ -14,7 +15,7 @@ varying vec3 vN;
 
 void main() {
     gl_Position = mProjection * mModelView * vPosition;
-    vP = (mModel * vPosition).xyz;
-    vN = (mModelNormals * vec4(vNormal, 0.0)).xyz;
+    vP = (mModelView * vPosition).xyz;
+    vN = (mModelViewNormals * vec4(vNormal, 0.0)).xyz;
     fNormal = vNormal;
 }

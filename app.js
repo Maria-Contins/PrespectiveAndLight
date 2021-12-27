@@ -55,7 +55,6 @@ let downY;
 const FLOOR_HEIGHT = 0.5;
 
 function setup(shaders) {
-
   let canvas = document.getElementById("gl-canvas");
 
   gl = setupWebGL(canvas);
@@ -91,11 +90,11 @@ function setup(shaders) {
       case "p":
         animation = !animation;
         break;
-        /*case "-":
-          VP_DISTANCE += 0.5;
-          break;
-        case "+":
-          VP_DISTANCE -= 0.5;
+      /*case "-":
+        VP_DISTANCE += 0.5;
+        break;
+      case "+":
+        VP_DISTANCE -= 0.5;
           break;*/
     }
   };
@@ -106,15 +105,15 @@ function setup(shaders) {
   let optionsFolder = cameraGUI.addFolder("options");
 
   let options = {
-    wireframe: false, //check
-    normals: true,
+    wireframe: false,
     backfaceCulling: true,
-    depthFirst: true, //check
-    showLights: true //check
+    depthFirst: true,
+    showLights: true,
   };
 
   /// wireframe
-  optionsFolder.add(options, "wireframe")
+  optionsFolder
+    .add(options, "wireframe")
     .listen()
     .onChange(function (v) {
       if (options.wireframe) {
@@ -124,46 +123,40 @@ function setup(shaders) {
       }
     });
   // depth first
-  optionsFolder.add(options, "depthFirst")
-      .listen().name("depth first")
-      .onChange(function (v) {
-        if (options.depthFirst)
-          gl.disable(gl.DEPTH_TEST);
-        else
-          gl.enable(gl.DEPTH_TEST);
-      });
-  // normals
-  optionsFolder.add(options, "normals")
+  optionsFolder
+    .add(options, "depthFirst")
     .listen()
-      .onChange(function(v) {
-
-      });
+    .name("depth first")
+    .onChange(function (v) {
+      if (options.depthFirst) gl.disable(gl.DEPTH_TEST);
+      else gl.enable(gl.DEPTH_TEST);
+    });
   // backfaceculling
-  optionsFolder.add(options, "backfaceCulling")
-      .listen().name("backface culling")
-      .onChange(function(v) {
-        if (options.depthFirst) {
-          gl.enable(gl.CULL_FACE);
-          gl.cullFace(gl.BACK);
-        } else
-          gl.disable(gl.CULL_FACE);
-      });
+  optionsFolder
+    .add(options, "backfaceCulling")
+    .listen()
+    .name("backface culling")
+    .onChange(function (v) {
+      if (options.depthFirst) {
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+      } else gl.disable(gl.CULL_FACE);
+    });
   // show lights
-  optionsFolder.add(options, "showLights")
-      .listen().name("show lights")
-      .onChange(function(v) {
-          lightsOn = !lightsOn;
-      });
-
+  optionsFolder
+    .add(options, "showLights")
+    .listen()
+    .name("show lights")
+    .onChange(function (v) {
+      lightsOn = !lightsOn;
+    });
 
   // CAMERA
   let cameraFolder = cameraGUI.addFolder("camera");
-
   let aspectWindow = canvas.width / canvas.height;
 
   let camera = {
     eye: vec3(3.67, 4.06, 2.73),
-    //eye: vec3(0, 0, 0),
     at: vec3(0, 0, 0),
     up: vec3(0, 1, 0),
     fovy: 75,
@@ -176,6 +169,7 @@ function setup(shaders) {
   resize_canvas();
 
   window.addEventListener("resize", resize_canvas);
+
   function resize_canvas(event) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -192,7 +186,6 @@ function setup(shaders) {
     .min(0)
     .max(10)
     .listen().domElement.style.pointerEvents = "none";
-    
 
   cameraFolder
     .add(camera, "near")
@@ -248,7 +241,7 @@ function setup(shaders) {
   let obj = {
     add: function addLight() {
       let lightDic = {
-        pos: vec3(3, 3.5, 0),
+        pos: vec3(3, 5, 0),
         ambient: [10, 10, 10],
         diffuse: [255, 255, 255],
         specular: [255, 255, 255],
@@ -271,10 +264,10 @@ function setup(shaders) {
   };
   lightsFolder.add(obj, "add").name("Add a new light");
 
-  //TODO: REMOVE
+  // TODO REMOVE
   function addLight() {
     let lightDic = {
-      pos: vec3(3, 3.5, 0),
+      pos: vec3(3, 5, 0),
       ambient: [10, 10, 10],
       diffuse: [255, 255, 255],
       specular: [255, 255, 255],
@@ -294,15 +287,14 @@ function setup(shaders) {
     lightFolder.add(lightDic, "directional");
     lightFolder.add(lightDic, "active");
   }
+
   addLight();
 
-  // OBJECT FOLDER
   let objectGUI = new dat.GUI({ name: "Object GUI" });
 
-  // initial color
-  const objectMaterial = {
+  var objectMaterial = {
     Ka: [93, 255, 0],
-    Kd: [219,113,219],
+    Kd: [0, 255, 30],
     Ks: [255, 255, 255],
     shininess: 12,
   };
@@ -313,12 +305,13 @@ function setup(shaders) {
   };
   objectGUI
     .add(objectType, "type", ["cube", "sphere", "cylinder", "pyramid", "torus"])
-    .listen().onChange(function (v) {
+    .listen()
+    .onChange(function (v) {
       shape = objectType.type;
       draw();
     });
   // change object type
-  function draw(){
+  function draw() {
     switch (shape) {
       case "sphere":
         SPHERE.draw(gl, program, mode);
@@ -360,53 +353,79 @@ function setup(shaders) {
         multTranslation(l.pos);
         multScale([0.1, 0.1, 0.1]);
         uploadModelView();
+        //activateColor([1,1,1]);
         SPHERE.draw(gl, program, gl.LINES);
         popMatrix();
       }
     }
   }
 
+  // TODO
+  function activateColor(color) {
+    let uColor = gl.getUniformLocation(program, "fColor");
+    gl.uniform3fv(uColor, flatten(color));
+    let hasColor = gl.getUniformLocation(program, "hasColor");
+    gl.uniform1f(hasColor, 1.0);
+  }
+
   window.requestAnimationFrame(render);
 
   function render() {
     window.requestAnimationFrame(render);
+
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     gl.useProgram(program);
 
-    let mProj = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
+    let mProj = perspective(
+      camera.fovy,
+      camera.aspect,
+      camera.near,
+      camera.far
+    );
 
     gl.uniformMatrix4fv(
-        gl.getUniformLocation(program, "mProjection"),
-        false, flatten(mProj)
+      gl.getUniformLocation(program, "mProjection"),
+      false,
+      flatten(mProj)
     );
 
     gl.uniform1f(
-        gl.getUniformLocation(program, "uMaterial.shininess"),
-        objectMaterial.shininess
+      gl.getUniformLocation(program, "uMaterial.shininess"),
+      objectMaterial.shininess
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Ka"),
-      flatten( vec3(objectMaterial.Ka[0] / 255,
-                    objectMaterial.Ka[1] / 255,
-                    objectMaterial.Ka[2] / 255 )
+      flatten(
+        vec3(
+          objectMaterial.Ka[0] / 255,
+          objectMaterial.Ka[1] / 255,
+          objectMaterial.Ka[2] / 255
+        )
       )
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Kd"),
-        flatten( vec3(objectMaterial.Kd[0] / 255,
-                      objectMaterial.Kd[1] / 255,
-                      objectMaterial.Kd[2] / 255)
-       )
+      flatten(
+        vec3(
+          objectMaterial.Kd[0] / 255,
+          objectMaterial.Kd[1] / 255,
+          objectMaterial.Kd[2] / 255
+        )
+      )
     );
 
     gl.uniform3fv(
       gl.getUniformLocation(program, "uMaterial.Ks"),
-        flatten( vec3(objectMaterial.Ks[0] / 255,
-                      objectMaterial.Ks[1] / 255,
-                      objectMaterial.Ks[2] / 255)
+      flatten(
+        vec3(
+          objectMaterial.Ks[0] / 255,
+          objectMaterial.Ks[1] / 255,
+          objectMaterial.Ks[2] / 255
         )
+      )
     );
 
     gl.uniform1i(gl.getUniformLocation(program, "uNLights"), lightArray.length);
@@ -452,8 +471,8 @@ function setup(shaders) {
       counter++;
     }
 
-    gl.uniform3fv(gl.getUniformLocation(program, "V"), flatten(camera.eye));
-
+    /*  gl.uniform3fv(gl.getUniformLocation(program, "V"), flatten(camera.eye));
+     */
     let tempM = modelView();
     loadIdentity();
     let mModel = modelView();
@@ -488,6 +507,12 @@ function setup(shaders) {
       flatten(normalMatrix(mModel))
     );
 
+    gl.uniformMatrix4fv(
+      gl.getUniformLocation(program, "mModelViewNormals"),
+      false,
+      flatten(normalMatrix(modelView()))
+    );
+
     /* mProjection = ortho(
 			-VP_DISTANCE * aspect,
 			VP_DISTANCE * aspect,
@@ -501,7 +526,6 @@ function setup(shaders) {
 		loadMatrix(view);
 		mView = modelView(); */
 
-    // DRAW STUFF
     uploadModelView();
     pushMatrix();
     multTranslation([0, 1, 0]);
@@ -513,9 +537,7 @@ function setup(shaders) {
     CUBE.draw(gl, program, mode);
     popMatrix();
     drawLights();
-
   }
 }
-
 const urls = ["shader.vert", "shader.frag"];
 loadShadersFromURLS(urls).then((shaders) => setup(shaders));

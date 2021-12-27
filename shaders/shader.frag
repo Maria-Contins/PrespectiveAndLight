@@ -24,7 +24,6 @@ uniform mat4 mView;
 varying vec3 fNormal;
 varying vec3 vP;
 varying vec3 vN;
-uniform vec3 V;
 
 vec3 forLight(){
 
@@ -34,13 +33,15 @@ vec3 forLight(){
 
         LightInfo light = uLight[i];
 
-        vec3 P = normalize(vP);  // vP = (mModel * vPosition).xyz;
+        vec3 P = normalize(vP);
 
-        vec3 N = normalize(vN); // vN = (mModelNormals * vec4(vNormal, 0.0)).xyz;
+        vec3 N = normalize(vN);
 
-        vec3 L = normalize(light.pos - P);
+        vec3 L = normalize((mView * vec4(light.pos, 1)).xyz - P);
 
         vec3 R = normalize(reflect(-L, N));
+
+        vec3 V = normalize(-P);
 
         vec3 ambient = light.Ia * uMaterial.Ka;
 
@@ -72,3 +73,15 @@ void main() {
     vec3 c = fNormal + vec3(1.0, 1.0, 1.0);
     gl_FragColor = vec4(forLight(), 1.0);
 }
+
+
+/*uniform vec3 fColor;
+uniform lowp float hasColor;
+
+void main() {
+    if(hasColor == 1.0){
+        gl_FragColor = vec4(fColor, 1.0);
+    } else {
+        gl_FragColor = vec4(fNormal, 1.0);
+    }
+}*/
