@@ -180,12 +180,15 @@ function setup(shaders) {
   }
 
   // camera options
-  cameraFolder.add(camera, "fovy").min(1).max(100).step(0.5).listen();
   cameraFolder
+      .add(camera, "fovy")
+      .min(1).max(100).step(0.5)
+      .listen();
+  /*cameraFolder
     .add(camera, "aspect")
     .min(0)
     .max(10)
-    .listen().domElement.style.pointerEvents = "none";
+    .listen().domElement.style.pointerEvents = "none";*/
 
   cameraFolder
     .add(camera, "near")
