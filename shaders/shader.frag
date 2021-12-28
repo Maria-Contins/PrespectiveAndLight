@@ -53,7 +53,7 @@ vec3 forLight(){
 
         vec3 specular = light.Is * uMaterial.Ks * specularFactor;
 
-        if(dot(L,N) < 0.0){
+        if(dot(L,N) < 0.0) {
             specular = vec3(0.0 , 0.0 , 0.0);
         }
 

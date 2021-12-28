@@ -272,7 +272,7 @@ function setup(shaders) {
         pushMatrix();
         multTranslation(l.pos);
         multScale([0.1, 0.1, 0.1]);
-        lightColor(l.specular);
+        lightColor(l.diffuse);
         uploadModelViewLights();
         SPHERE.draw(gl, programLight, gl.LINES);
         popMatrix();
@@ -280,10 +280,9 @@ function setup(shaders) {
     }
   }
 
-  // TODO
-  function lightColor(specular) {
+  function lightColor(difuse) {
       let color = gl.getUniformLocation(programLight, "fColor");
-      gl.uniform4fv(color, vec4(specular[0]/255, specular[1]/255, specular[2]/255, 1.0));
+      gl.uniform4fv(color, vec4(difuse[0]/255, difuse[1]/255, difuse[2]/255, 1.0));
   }
 
   let objectGUI = new dat.GUI({ name: "Object GUI" });
@@ -500,6 +499,12 @@ function setup(shaders) {
     draw();
     multTranslation([0, -(1 / 2 + FLOOR_HEIGHT / 2), 0]);
     multScale([5, FLOOR_HEIGHT, 5]);
+
+    gl.uniform3fv(gl.getUniformLocation(program, "uMaterial.Ka"), flatten(vec3(0.2,0.6,0.2)));
+    gl.uniform3fv(gl.getUniformLocation(program, "uMaterial.Kd"), flatten(vec3(0.2,0.6,0.2)));
+    gl.uniform3fv(gl.getUniformLocation(program, "uMaterial.Ka"), flatten(vec3(0.2,0.6,0.2)));
+    gl.uniform1f(gl.getUniformLocation(program, "uMaterial.shininess"), 50);
+
     uploadModelView();
     CUBE.draw(gl, program, mode);
     popMatrix();
