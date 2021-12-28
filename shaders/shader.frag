@@ -74,14 +74,3 @@ void main() {
     gl_FragColor = vec4(forLight(), 1.0);
 }
 
-
-/*uniform vec3 fColor;
-uniform lowp float hasColor;
-
-void main() {
-    if(hasColor == 1.0){
-        gl_FragColor = vec4(fColor, 1.0);
-    } else {
-        gl_FragColor = vec4(fNormal, 1.0);
-    }
-}*/

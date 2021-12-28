@@ -43,8 +43,7 @@ import * as dat from "../../libs/dat.gui.module.js";
 let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let shape = "sphere"; // primitive drawn
-let lightsOn = true;
-let zBuff = true;
+let lightsOn = true;  // if light are supposed to be shown
 let animation = true; // Animation is running
 let cameraGUI;
 
@@ -66,6 +65,13 @@ function setup(shaders) {
     shaders["shader.frag"]
   );
 
+  let programLight = buildProgramFromSources(
+      gl,
+      shaders["shader.vert"],
+      shaders["shaderLight.frag"]
+  );
+
+
   mode = gl.TRIANGLES;
 
   gl.clearColor(0.0, 0.0, 0.0, 1);
@@ -77,28 +83,6 @@ function setup(shaders) {
   PYRAMID.init(gl);
 
   gl.enable(gl.DEPTH_TEST); // Enables Z-buffer depth test
-  //gl.enable(gl.CULL_FACE)
-
-  //KEYBOARD CONTROLS
-  document.onkeydown = function (event) {
-    switch (event.key) {
-      case "W":
-        mode = gl.LINES;
-        break;
-      case "S":
-        mode = gl.TRIANGLES;
-        break;
-      case "p":
-        animation = !animation;
-        break;
-      /*case "-":
-        VP_DISTANCE += 0.5;
-        break;
-      case "+":
-        VP_DISTANCE -= 0.5;
-          break;*/
-    }
-  };
 
   cameraGUI = new dat.GUI({ name: "Camera GUI" });
 
@@ -185,12 +169,6 @@ function setup(shaders) {
       .add(camera, "fovy")
       .min(1).max(100).step(0.5)
       .listen();
-  /*cameraFolder
-    .add(camera, "aspect")
-    .min(0)
-    .max(10)
-    .listen().domElement.style.pointerEvents = "none";*/
-
   cameraFolder
     .add(camera, "near")
     .min(0.1)
@@ -224,6 +202,7 @@ function setup(shaders) {
   up.add(camera.up, 1).step(0.05).name("y").listen();
   up.add(camera.up, 2).step(0.05).name("z").listen();
 
+  // LIGHTS
   let lightsFolder = cameraFolder.addFolder("lights");
 
   let lightArray = [];
@@ -286,6 +265,27 @@ function setup(shaders) {
   // add first light
   addLight();
 
+  // draw lights
+  function drawLights() {
+    if (lightsOn) {
+      for (let l of lightArray) {
+        pushMatrix();
+        multTranslation(l.pos);
+        multScale([0.1, 0.1, 0.1]);
+        lightColor(l.specular);
+        uploadModelViewLights();
+        SPHERE.draw(gl, programLight, gl.LINES);
+        popMatrix();
+      }
+    }
+  }
+
+  // TODO
+  function lightColor(specular) {
+      let color = gl.getUniformLocation(programLight, "fColor");
+      gl.uniform4fv(color, vec4(specular[0]/255, specular[1]/255, specular[2]/255, 1.0));
+  }
+
   let objectGUI = new dat.GUI({ name: "Object GUI" });
 
   var objectMaterial = {
@@ -342,17 +342,12 @@ function setup(shaders) {
     );
   }
 
-  function drawLights() {
-    if (lightsOn) {
-      for (let l of lightArray) {
-        pushMatrix();
-        multTranslation(l.pos);
-        multScale([0.1, 0.1, 0.1]);
-        uploadModelView();
-        SPHERE.draw(gl, program, gl.LINES);
-        popMatrix();
-      }
-    }
+  function uploadModelViewLights() {
+    gl.uniformMatrix4fv(
+        gl.getUniformLocation(programLight, "mModelView"),
+        false,
+        flatten(modelView())
+    );
   }
 
   window.requestAnimationFrame(render);
@@ -508,8 +503,30 @@ function setup(shaders) {
     uploadModelView();
     CUBE.draw(gl, program, mode);
     popMatrix();
+
+    // for lights
+    gl.useProgram(programLight);
+
+    gl.uniformMatrix4fv(
+        gl.getUniformLocation(programLight, "mModelView"),
+        false,
+        flatten(mView)
+    );
+
+    gl.uniformMatrix4fv(
+        gl.getUniformLocation(programLight, "mModelViewNormals"),
+        false,
+        flatten(normalMatrix(modelView()))
+    );
+
+    gl.uniformMatrix4fv(
+        gl.getUniformLocation(programLight, "mProjection"),
+        false,
+        flatten(mProj)
+    );
+
     drawLights();
   }
 }
-const urls = ["shader.vert", "shader.frag"];
+const urls = ["shader.vert", "shader.frag", "shaderLight.frag"];
 loadShadersFromURLS(urls).then((shaders) => setup(shaders));
