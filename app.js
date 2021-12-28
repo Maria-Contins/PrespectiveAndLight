@@ -4,30 +4,20 @@ import {
   setupWebGL,
 } from "../../libs/utils.js";
 import {
-  ortho,
   lookAt,
   flatten,
-  inverse,
-  scale,
-  mult,
   normalMatrix,
   vec4,
-  vec2,
-  add,
   vec3,
   perspective,
-  length,
 } from "../../libs/MV.js";
 import {
   modelView,
   loadMatrix,
-  multRotationY,
   multScale,
   pushMatrix,
   popMatrix,
   multTranslation,
-  multRotationZ,
-  multRotationX,
   loadIdentity,
 } from "../../libs/stack.js";
 
@@ -44,12 +34,7 @@ let gl;
 let mode; // Drawing mode (gl.LINES or gl.TRIANGLES)
 let shape = "sphere"; // primitive drawn
 let lightsOn = true;  // if light are supposed to be shown
-let animation = true; // Animation is running
 let cameraGUI;
-
-let mouse_down = false;
-let downX;
-let downY;
 
 const FLOOR_HEIGHT = 0.5;
 const MAX_LIGHTS = 8;
@@ -236,7 +221,6 @@ function setup(shaders) {
   // add light tab
   lightsFolder.add(obj, "add").name("Add a new light");
 
-  // TODO REMOVE
   function addLight() {
     if (lightArray.length < MAX_LIGHTS) {
       let lightDic = {
@@ -280,14 +264,14 @@ function setup(shaders) {
     }
   }
 
-  function lightColor(difuse) {
+  function lightColor(diffuse) {
       let color = gl.getUniformLocation(programLight, "fColor");
-      gl.uniform4fv(color, vec4(difuse[0]/255, difuse[1]/255, difuse[2]/255, 1.0));
+      gl.uniform4fv(color, vec4(diffuse[0]/255, diffuse[1]/255, diffuse[2]/255, 1.0));
   }
 
   let objectGUI = new dat.GUI({ name: "Object GUI" });
 
-  var objectMaterial = {
+  let objectMaterial = {
     Ka: [93, 255, 0],
     Kd: [0, 255, 30],
     Ks: [255, 255, 255],
@@ -463,7 +447,6 @@ function setup(shaders) {
       flatten(mModel)
     );
 
-    // TODO: when mouse rotates in the x axis, check length that mouse travelled and use that to calculate angle of rotation
     let mView = lookAt(camera.eye, camera.at, camera.up);
 
     loadMatrix(mView);

@@ -1,10 +1,6 @@
 uniform mat4 mModelView;
 uniform mat4 mProjection;
-uniform mat4 mView;
-uniform mat4 mModelNormals;
 uniform mat4 mModelViewNormals;
-uniform mat4 mModel;
-uniform mat4 mNormals;
 
 attribute vec4 vPosition;
 attribute vec3 vNormal;
