@@ -31,41 +31,41 @@ vec3 forLight(){
 
     for(int i = 0; i < MAX_LIGHTS; i++){
 
+        if(i <= uNLights){
         LightInfo light = uLight[i];
 
-        vec3 P = normalize(vP);
+            if (light.isActive) {
+                vec3 P = normalize(vP);
 
-        vec3 N = normalize(vN);
+                vec3 N = normalize(vN);
 
-        vec3 L = normalize((mView * vec4(light.pos, 1)).xyz - P);
+                vec3 L = normalize((mView * vec4(light.pos, 0)).xyz - P);
 
-        vec3 R = normalize(reflect(-L, N));
+                vec3 R = normalize(reflect(-L, N));
 
-        vec3 V = normalize(-P);
+                vec3 V = normalize(-P);
 
-        vec3 ambient = light.Ia * uMaterial.Ka;
+                vec3 ambient = light.Ia * uMaterial.Ka;
 
-        float diffuseFactor = max(dot(L, N), 0.0);
+                float diffuseFactor = max(dot(L, N), 0.0);
 
-        vec3 diffuse = light.Id * uMaterial.Kd * diffuseFactor;
+                vec3 diffuse = light.Id * uMaterial.Kd * diffuseFactor;
 
-        float specularFactor =  pow(max(dot(R, V), 0.0), uMaterial.shininess);
+                float specularFactor =  pow(max(dot(R, V), 0.0), uMaterial.shininess);
 
-        vec3 specular = light.Is * uMaterial.Ks * specularFactor;
+                vec3 specular = light.Is * uMaterial.Ks * specularFactor;
 
-        if(dot(L,N) < 0.0) {
-            specular = vec3(0.0 , 0.0 , 0.0);
+                if(dot(L,N) < 0.0) {
+                    specular = vec3(0.0 , 0.0 , 0.0);
+                }
+
+                vec3 lightTotal = ambient + diffuse + specular;
+
+                total += lightTotal;
+            }
         }
-
-        vec3 lightTotal = ambient + diffuse + specular;
-
-        total += lightTotal;
-
-        if(i == uNLights){
-            break;
-        }
+        if(i == uNLights) break;
     }
-
     return total;
 }
 

@@ -86,11 +86,10 @@ function setup(shaders) {
     .add(options, "wireframe")
     .listen()
     .onChange(function (v) {
-      if (options.wireframe) {
+      if (options.wireframe)
         mode = gl.LINES;
-      } else {
+      else
         mode = gl.TRIANGLES;
-      }
     });
   // depth first
   optionsFolder
@@ -98,8 +97,10 @@ function setup(shaders) {
     .listen()
     .name("depth first")
     .onChange(function (v) {
-      if (options.depthFirst) gl.disable(gl.DEPTH_TEST);
-      else gl.enable(gl.DEPTH_TEST);
+      if (options.depthFirst)
+        gl.enable(gl.DEPTH_TEST);
+      else
+        gl.disable(gl.DEPTH_TEST);
     });
   // backfaceculling
   optionsFolder
@@ -107,10 +108,11 @@ function setup(shaders) {
     .listen()
     .name("backface culling")
     .onChange(function (v) {
-      if (options.depthFirst) {
+      if (options.backfaceCulling) {
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
-      } else gl.disable(gl.CULL_FACE);
+      } else
+        gl.disable(gl.CULL_FACE);
     });
   // show lights
   optionsFolder
@@ -195,7 +197,7 @@ function setup(shaders) {
     add: function addLight() {
       if (lightArray.length < MAX_LIGHTS) {
         let lightDic = {
-          pos: vec3(3, 5, 0),
+          pos: vec3(3, 3, 0),
           ambient: [10, 10, 10],
           diffuse: [255, 255, 255],
           specular: [255, 255, 255],
@@ -213,8 +215,8 @@ function setup(shaders) {
         lightFolder.addColor(lightDic, "ambient").listen();
         lightFolder.addColor(lightDic, "diffuse").listen();
         lightFolder.addColor(lightDic, "specular").listen();
-        lightFolder.add(lightDic, "directional");
-        lightFolder.add(lightDic, "active");
+        lightFolder.add(lightDic, "directional").listen();
+        lightFolder.add(lightDic, "active").listen();
       }
     },
   };
@@ -224,12 +226,12 @@ function setup(shaders) {
   function addLight() {
     if (lightArray.length < MAX_LIGHTS) {
       let lightDic = {
-        pos: vec3(3, 5, 0),
+        pos: vec3(3, 3, 0),
         ambient: [10, 10, 10],
         diffuse: [255, 255, 255],
         specular: [255, 255, 255],
         directional: false,
-        active: true,
+        isActive: true,
       };
 
       lightArray.push(lightDic);
@@ -242,10 +244,11 @@ function setup(shaders) {
       lightFolder.addColor(lightDic, "ambient").listen();
       lightFolder.addColor(lightDic, "diffuse").listen();
       lightFolder.addColor(lightDic, "specular").listen();
-      lightFolder.add(lightDic, "directional");
-      lightFolder.add(lightDic, "active");
+      lightFolder.add(lightDic, "directional").listen();
+      lightFolder.add(lightDic, "isActive").listen().name("active");
     }
   }
+
   // add first light
   addLight();
 
@@ -434,6 +437,7 @@ function setup(shaders) {
       );
 
       counter++;
+      console.log(l.isActive);
     }
 
     let tempM = modelView();
