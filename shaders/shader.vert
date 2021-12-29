@@ -13,5 +13,6 @@ void main() {
     gl_Position = mProjection * mModelView * vPosition;
     vP = (mModelView * vPosition).xyz;
     vN = (mModelViewNormals * vec4(vNormal, 0.0)).xyz;
+
     fNormal = vNormal;
 }

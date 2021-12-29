@@ -21,9 +21,11 @@ uniform int uNLights; // Effective number of lights used
 uniform LightInfo uLight[MAX_LIGHTS]; // The array of lights present in the scene
 uniform MaterialInfo uMaterial;  // The material of the object being drawn
 uniform mat4 mView;
+uniform mat4 mViewNormals;
 varying vec3 fNormal;
 varying vec3 vP;
 varying vec3 vN;
+
 
 vec3 forLight(){
 
@@ -39,7 +41,12 @@ vec3 forLight(){
 
                 vec3 N = normalize(vN);
 
-                vec3 L = normalize((mView * vec4(light.pos, 0)).xyz - P);
+                vec3 L;
+
+                if (light.isDirectional)
+                    L = normalize((mViewNormals * (vec4(light.pos, 1))).xyz);
+                else
+                    L = normalize((mView * vec4(light.pos, 0)).xyz - P);
 
                 vec3 R = normalize(reflect(-L, N));
 

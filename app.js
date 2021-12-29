@@ -479,6 +479,8 @@ function setup(shaders) {
       flatten(normalMatrix(modelView()))
     );
 
+
+
     uploadModelView();
     pushMatrix();
     multTranslation([0, 1, 0]);
