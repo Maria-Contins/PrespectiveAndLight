@@ -7,4 +7,4 @@ _tip:_ drag mouse up and down when clicling position fields to move camera/light
 Clone, or check [here](https://maria-contins.github.io/PrespectiveAndLight/)!
 
 ## Made with:
-* [**Claudio Guerra**](https://github.com/claudiofcguerra)
+* [**Cláudio Guerra**](https://github.com/claudiofcguerra)
